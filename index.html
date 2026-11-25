@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090a0b">
+  <title>暗所 — 光源によって際立つ暗さ</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #e9e6df;
+      --muted: #89877f;
+      --line: rgba(224, 216, 199, .14);
+      --glow: 195, 168, 119;
+    }
+    * { box-sizing: border-box; }
+    html { background: #090a0b; scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 50% -20%, rgba(102, 91, 72, .12), transparent 55%),
+        #090a0b;
+      font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .shell { width: min(1440px, 100% - 72px); margin: 0 auto; }
+    header {
+      min-height: 285px;
+      padding: 43px 0 58px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+    .topline, .sectionline, .card-meta, footer {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .topline { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
+    .brand { margin: 0; font-size: clamp(56px, 9vw, 112px); font-weight: 400; line-height: .95; letter-spacing: .08em; }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+    .theme { margin: 0; color: #aaa69c; font-size: clamp(14px, 1.45vw, 18px); letter-spacing: .14em; }
+    .count { color: var(--muted); font: 11px "Helvetica Neue", Arial, sans-serif; letter-spacing: .12em; }
+    main { padding: 25px 0 100px; }
+    .sectionline { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; margin-bottom: 22px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+    .card {
+      --x: 50%; --y: 50%;
+      position: relative;
+      isolation: isolate;
+      padding: 20px;
+      background: #101112;
+      border: 1px solid rgba(220, 211, 193, .09);
+      overflow: hidden;
+      transition: border-color .45s ease;
+    }
+    .card::before {
+      content: "";
+      pointer-events: none;
+      position: absolute;
+      z-index: -1;
+      inset: -1px;
+      background: radial-gradient(ellipse 44% 42% at var(--x) var(--y), rgba(var(--glow), .29), rgba(var(--glow), .08) 42%, transparent 78%);
+      opacity: .68;
+      transition: opacity .45s ease;
+    }
+    .card:hover { border-color: rgba(220, 211, 193, .24); }
+    .card:hover::before { opacity: 1; }
+    .frame { position: relative; overflow: hidden; background: #08090a; aspect-ratio: 3 / 2; }
+    .frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.09), inset 0 0 34px rgba(0,0,0,.26);
+    }
+    .frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .mosaic-screen {
+      position: fixed; inset: 0; z-index: 20; pointer-events: none;
+      -webkit-backdrop-filter: blur(5px) brightness(.62) saturate(.58);
+      backdrop-filter: blur(5px) brightness(.62) saturate(.58);
+      background-image: repeating-linear-gradient(0deg, transparent 0 31px, rgba(210,198,173,.08) 32px, transparent 33px), repeating-linear-gradient(90deg, transparent 0 31px, rgba(210,198,173,.08) 32px, transparent 33px);
+    }
+    .clarity-layer {
+      position: fixed; inset: 0; z-index: 21; pointer-events: none; overflow: hidden;
+      clip-path: circle(145px at var(--cursor-x, -500px) var(--cursor-y, -500px));
+    }
+    .clarity-layer.photo-layer { z-index: 22; clip-path: inset(var(--photo-top, 100%) var(--photo-right, 100%) var(--photo-bottom, 0%) var(--photo-left, 100%)); }
+    .clarity-layer > .shell {
+      position: absolute; top: 0; left: 50%; margin: 0;
+      transform: translate(-50%, var(--scroll-offset, 0px));
+      filter: none !important;
+    }
+    .clarity-layer .frame img { filter: none !important; transform: none !important; clip-path: none !important; }
+    .clarity-layer .frame::before, .clarity-layer .card::before { display: none !important; }
+    @media (hover: none), (pointer: coarse) {
+      .mosaic-screen, .clarity-layer { display: none; }
+    }
+    .card-meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 9px 14px; padding-top: 17px; color: var(--muted); font-size: 10px; }
+    .card-name { color: var(--ink); font: 17px "Hiragino Mincho ProN", "Yu Mincho", serif; letter-spacing: .12em; }
+    footer { border-top: 1px solid var(--line); padding: 21px 0 35px; color: var(--muted); font-size: 9px; display: flex; justify-content: space-between; }
+    @media (min-width: 1100px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+      .card { padding: 25px; }
+    }
+    @media (max-width: 650px) {
+      .shell { width: calc(100% - 36px); }
+      header { min-height: 245px; padding: 27px 0 34px; }
+      .topline { font-size: 9px; }
+      .brand { font-size: clamp(54px, 17vw, 82px); }
+      .intro { align-items: start; flex-direction: column; gap: 13px; }
+      main { padding: 18px 0 64px; }
+      .grid { grid-template-columns: 1fr; gap: 15px; }
+      .card { padding: 13px; }
+      .frame { aspect-ratio: 1.18 / 1; }
+      .card-meta { padding-top: 13px; }
+      footer { font-size: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="topline"><span>PRIVATE ARCHIVE</span><span>STUDY 001 / DARKNESS</span></div>
+      <h1 class="brand">暗所</h1>
+      <div class="intro">
+        <p class="theme">光源によって際立つ暗さ</p>
+        <span class="count">IMAGE INDEX — 05</span>
+      </div>
+    </header>
+    <main>
+      <div class="sectionline"><span>記録写真</span><span>01 — 05</span></div>
+      <section class="grid" aria-label="写真一覧">
+        <article class="card" tabindex="0"><div class="frame"><img src="images/01.jpg" alt="閉店後の洋服屋" loading="lazy"></div><div class="card-meta"><span class="card-name">01　閉店後の洋服屋</span><span>IMAGE 01</span></div></article>
+        <article class="card" tabindex="0"><div class="frame"><img src="images/02.jpg" alt="曽祖母の家で飯を食う猫" loading="lazy"></div><div class="card-meta"><span class="card-name">02　曽祖母の家で飯を食う猫</span><span>IMAGE 02</span></div></article>
+        <article class="card" tabindex="0"><div class="frame"><img src="images/03.jpg" alt="中之島のビルの反射" loading="lazy"></div><div class="card-meta"><span class="card-name">03　中之島のビルの反射</span><span>IMAGE 03</span></div></article>
+        <article class="card" tabindex="0"><div class="frame"><img src="images/04.jpg" alt="愛知県の地域のお祭り" loading="lazy"></div><div class="card-meta"><span class="card-name">04　愛知県の地域のお祭り</span><span>IMAGE 04</span></div></article>
+        <article class="card" tabindex="0"><div class="frame"><img src="images/05.jpg" alt="住宅街での花火" loading="lazy"></div><div class="card-meta"><span class="card-name">05　住宅街での花火</span><span>IMAGE 05</span></div></article>
+      </section>
+    </main>
+    <footer><span>暗所</span><span>PHOTOGRAPHS / 05</span></footer>
+  </div>
+  <script>
+    // ページ全体を複製し、カーソル周辺と写真全体を鮮明なレイヤーで見せる
+    const sourceUI = document.querySelector('.shell');
+    const screen = document.createElement('div');
+    screen.className = 'mosaic-screen';
+    screen.setAttribute('aria-hidden', 'true');
+    document.body.append(screen);
+    const makeClearLayer = (className) => {
+      const layer = document.createElement('div');
+      layer.className = `clarity-layer ${className}`;
+      layer.setAttribute('aria-hidden', 'true');
+      layer.inert = true;
+      const clearUI = sourceUI.cloneNode(true);
+      clearUI.querySelectorAll('img').forEach((image) => { image.loading = 'eager'; });
+      layer.append(clearUI);
+      document.body.append(layer);
+      return layer;
+    };
+    const cursorLayer = makeClearLayer('cursor-layer');
+    const photoLayer = makeClearLayer('photo-layer');
+    let activeFrame = null;
+    let touchPinned = false;
+    const syncLayers = () => {
+      const offset = `${-window.scrollY}px`;
+      cursorLayer.style.setProperty('--scroll-offset', offset);
+      photoLayer.style.setProperty('--scroll-offset', offset);
+      if (!activeFrame) return;
+      const rect = activeFrame.getBoundingClientRect();
+      photoLayer.style.setProperty('--photo-top', `${Math.max(0, rect.top)}px`);
+      photoLayer.style.setProperty('--photo-right', `${Math.max(0, window.innerWidth - rect.right)}px`);
+      photoLayer.style.setProperty('--photo-bottom', `${Math.max(0, window.innerHeight - rect.bottom)}px`);
+      photoLayer.style.setProperty('--photo-left', `${Math.max(0, rect.left)}px`);
+    };
+    document.addEventListener('pointermove', (event) => {
+      if (event.pointerType === 'touch') return;
+      document.documentElement.style.setProperty('--cursor-x', `${event.clientX}px`);
+      document.documentElement.style.setProperty('--cursor-y', `${event.clientY}px`);
+    });
+    document.addEventListener('pointerout', (event) => {
+      if (event.relatedTarget) return;
+      document.documentElement.style.setProperty('--cursor-x', '-500px');
+      document.documentElement.style.setProperty('--cursor-y', '-500px');
+    });
+    document.querySelectorAll('.card').forEach((card) => {
+      const frame = card.querySelector('.frame');
+      frame.addEventListener('pointerenter', (event) => {
+        if (event.pointerType === 'touch') return;
+        activeFrame = frame;
+        touchPinned = false;
+        syncLayers();
+      });
+      frame.addEventListener('pointerleave', () => {
+        if (touchPinned) return;
+        activeFrame = null;
+        syncLayers();
+      });
+      card.addEventListener('pointerdown', (event) => {
+        if (event.pointerType !== 'touch') return;
+        activeFrame = touchPinned && activeFrame === frame ? null : frame;
+        touchPinned = Boolean(activeFrame);
+        syncLayers();
+      });
+      card.addEventListener('focus', () => { activeFrame = frame; syncLayers(); });
+      card.addEventListener('blur', () => {
+        if (!touchPinned) activeFrame = null;
+        syncLayers();
+      });
+    });
+    window.addEventListener('scroll', syncLayers, { passive: true });
+    window.addEventListener('resize', syncLayers);
+    syncLayers();
+  </script>
+</body>
+</html>
